@@ -1,5 +1,6 @@
 import streamlit as st
 from PIL import Image
+import pandas as pd
 import io
 import cv2
 from tensorflow.keras.models import load_model
@@ -94,58 +95,50 @@ elif input_method == "Camera Input":
 # Model file path
 export_file_path = "./models/export.pkl"
 
+
 def Plant_Disease_Detection(img_file):
     model = load_learner(export_file_path)
     prediction, _, outputs = model.predict(img_file)
 
-    # Debugging: Print the outputs shape and content
-    st.write("Outputs:", outputs)
+    # Convert tensor outputs to a NumPy array
+    outputs_np = outputs.numpy()
     
-    # Check if outputs is indeed an array and has the expected shape
-    if isinstance(outputs, (np.ndarray, list)):
-        confidence = np.max(outputs) * 100  # Get confidence percentage
-    else:
-        st.error("Unexpected output format from model. Outputs: {}".format(outputs))
-        confidence = 0  # Default to 0 if we can't extract confidence
+    # Get the maximum confidence and the corresponding class
+    confidence = np.max(outputs_np) * 100  # Get confidence percentage
+    predicted_class_index = np.argmax(outputs_np)
+    predicted_class = classes[predicted_class_index]
 
-    return prediction, confidence
+    return predicted_class, confidence, outputs_np  # Return class, confidence, and all outputs
 
-
-submit = st.button(label="Submit Leaf Image")
+# After the submit button is clicked
 if submit:
     st.subheader("Output")
     if input_method == "File Uploader":
         img_file_path = uploaded_file_img
     elif input_method == "Camera Input":
         img_file_path = camera_file_img
-
-    prediction, confidence = Plant_Disease_Detection(img_file_path)
-    treatment = "Refer to local agricultural guidelines for treatment."  # Replace with actual treatment information if available
     
-    # Prepare output data
-    output_data = {
-        "Leaf Name": [img_file_path],
-        "Disease/Healthy": [prediction],
-        "Confidence (%)": [confidence],
-        "Treatment": [treatment],
-    }
+    prediction, confidence, outputs = Plant_Disease_Detection(img_file_path)
 
-    # Create DataFrame for display
-    output_df = pd.DataFrame(output_data)
+    # Prepare data for DataFrame
+    treatment = "Consult agricultural guidelines based on the detected disease."  # Example treatment message
+    output_df = pd.DataFrame({
+        'Leaf Name': [prediction],
+        'Status': ['Healthy' if 'healthy' in prediction else 'Disease Detected'],
+        'Confidence (%)': [confidence],
+        'Suggested Treatment': [treatment],
+    })
 
+    # Display the DataFrame
     st.write(output_df)
 
-    # Create Pie chart for confidence visualization
-    labels = ['Confidence', 'Uncertainty']
-    sizes = [confidence, 100 - confidence]
-    colors = ['gold', 'lightcoral']
-    explode = (0.1, 0)  # explode 1st slice
-
-    plt.figure(figsize=(6, 6))
-    plt.pie(sizes, explode=explode, labels=labels, colors=colors,
-            autopct='%1.1f%%', shadow=True, startangle=90)
-    plt.axis('equal')  # Equal aspect ratio ensures that pie chart is circular.
+    # Plotting a pie chart for confidence
+    import matplotlib.pyplot as plt
     
+    # Pie chart for confidence
+    plt.figure(figsize=(5, 5))
+    plt.pie([confidence, 100 - confidence], labels=[f'Confidence: {confidence:.2f}%', 'Uncertainty'], autopct='%1.1f%%', startangle=90)
+    plt.title('Confidence in Prediction')
     st.pyplot(plt)
 
 footer = """
