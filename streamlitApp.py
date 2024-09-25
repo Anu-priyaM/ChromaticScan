@@ -218,11 +218,8 @@ if submit:
             plt.ylabel("Class")
             st.pyplot(plt)
 
-            # Pie Chart for the predicted class vs others
-            plt.figure(figsize=(7, 7))
-            plt.pie([probabilities[idx], 1 - probabilities[idx]], labels=[prediction, 'Other Classes'], autopct='%1.1f%%', startangle=90, colors=['#66c2a5', '#fc8d62'])
-            plt.title("Prediction Confidence Distribution")
-            st.pyplot(plt)
+            
+           
 
 footer = """
 <div style="text-align: center; font-size: medium; margin-top:50px;">
