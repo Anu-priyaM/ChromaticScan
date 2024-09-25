@@ -124,6 +124,48 @@ classes_and_descriptions = {
     "Background_without_leaves": "No plant leaf detected in the image.",
 }
 
+# Define remedies for each class
+remedies = {
+    "Apple___Apple_scab": "Apply fungicide and remove affected leaves.",
+    "Apple___Black_rot": "Use copper fungicides and ensure good air circulation.",
+    "Apple___Cedar_apple_rust": "Use resistant varieties and apply fungicides.",
+    "Apple___healthy": "No treatment needed.",
+    "Blueberry___healthy": "No treatment needed.",
+    "Cherry___Powdery_mildew": "Apply fungicides to manage powdery mildew.",
+    "Cherry___healthy": "No treatment needed.",
+    "Corn___Cercospora_leaf_spot Gray_leaf_spot": "Apply fungicides and improve drainage.",
+    "Corn___Common_rust": "Use resistant hybrids and fungicides.",
+    "Corn___Northern_Leaf_Blight": "Rotate crops and use resistant varieties.",
+    "Corn___healthy": "No treatment needed.",
+    "Grape___Black_rot": "Use fungicides and remove infected fruits.",
+    "Grape___Esca_(Black_Measles)": "Prune affected vines and apply appropriate fungicides.",
+    "Grape___Leaf_blight_(Isariopsis_Leaf_Spot)": "Apply fungicides and improve air circulation.",
+    "Grape___healthy": "No treatment needed.",
+    "Orange___Haunglongbing_(Citrus_greening)": "Use disease-free plants and manage insect vectors.",
+    "Peach___Bacterial_spot": "Apply copper-based fungicides and improve air circulation.",
+    "Peach___healthy": "No treatment needed.",
+    "Pepper,_bell___Bacterial_spot": "Use resistant varieties and apply copper fungicides.",
+    "Pepper,_bell___healthy": "No treatment needed.",
+    "Potato___Early_blight": "Use fungicides and rotate crops.",
+    "Potato___Late_blight": "Use resistant varieties and apply fungicides.",
+    "Potato___healthy": "No treatment needed.",
+    "Raspberry___healthy": "No treatment needed.",
+    "Soybean___healthy": "No treatment needed.",
+    "Squash___Powdery_mildew": "Apply fungicides and improve air circulation.",
+    "Strawberry___Leaf_scorch": "Water adequately and apply fungicides.",
+    "Strawberry___healthy": "No treatment needed.",
+    "Tomato___Bacterial_spot": "Use resistant varieties and apply copper fungicides.",
+    "Tomato___Early_blight": "Apply fungicides and rotate crops.",
+    "Tomato___Late_blight": "Use resistant varieties and apply fungicides.",
+    "Tomato___Leaf_Mold": "Improve ventilation and apply fungicides.",
+    "Tomato___Septoria_leaf_spot": "Rotate crops and use resistant varieties.",
+    "Tomato___Spider_mites Two-spotted_spider_mite": "Apply miticides and improve air circulation.",
+    "Tomato___Target_Spot": "Use fungicides and rotate crops.",
+    "Tomato___Tomato_Yellow_Leaf_Curl_Virus": "Manage aphids and use resistant varieties.",
+    "Tomato___Tomato_mosaic_virus": "Use virus-free seeds and manage insect vectors.",
+    "Tomato___healthy": "No treatment needed.",
+    "Background_without_leaves": "No treatment needed.",
+}
 
 # Define the functions to load images
 def load_uploaded_image(file):
@@ -167,9 +209,16 @@ export_file_path = "./models/export.pkl"
 def Plant_Disease_Detection(img_file_path):
     model = load_learner(export_file_path, "export.pkl")
     # Get prediction and confidence score
-    prediction, idx, probabilities = model.predict(img_file_path)
+    prediction, confidence_message, probabilities, remedy = Plant_Disease_Detection(img_file_path)
     
     # Extract the confidence score
+    
+    with st.spinner(text="This may take a moment..."):
+        st.write(prediction)
+        if confidence_message:
+            st.write(confidence_message)
+        if remedy:
+            st.write(f"Recommended Treatment: {remedy}")
     confidence_score = probabilities[idx].item()
 
     # Check if prediction is valid
