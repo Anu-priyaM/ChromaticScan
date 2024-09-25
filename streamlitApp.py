@@ -3,7 +3,6 @@ from PIL import Image
 import numpy as np
 import cv2
 from tensorflow.keras.models import load_model
-from fastai.learner import load_learner
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -48,37 +47,21 @@ elif page == "Prediction":
         "A ResNet 34-based Algorithm for Robust Plant Disease Detection with 99.2% Accuracy Across 39 Different Classes of Plant Leaf Images."
     )
 
-    st.write("Try clicking a leaf image and watch how an AI Model will detect its disease.")
-    st.write(
-        "The application will infer one label out of 39 labels, as follows: "
-        "'Apple__Apple_scab', 'Apple_Black_rot', 'Apple_Cedar_apple_rust', 'Apple__healthy', "
-        "'Background_without_leaves', 'Blueberry__healthy', 'Cherry__healthy', "
-        "'Corn__Cercospora_leaf_spot Gray_leaf_spot', 'Corn_Common_rust', 'Corn__Northern_Leaf_Blight', "
-        "'Corn__healthy', 'Grape_Black_rot', 'Grape_Esca(Black_Measles)', "
-        "'Grape__Leaf_blight(Isariopsis_Leaf_Spot)', 'Grape__healthy', 'Orange_Haunglongbing(Citrus_greening)', "
-        "'Peach__Bacterial_spot', 'Peach_healthy', 'Pepper,_bell__Bacterial_spot', "
-        "'Pepper,bell_healthy', 'Potato_Early_blight', 'Potato_Late_blight', 'Potato__healthy', "
-        "'Raspberry__healthy', 'Soybean_healthy', 'Squash_Powdery_mildew', 'Strawberry__Leaf_scorch', "
-        "'Strawberry__healthy', 'Tomato_Bacterial_spot', 'Tomato_Early_blight', 'Tomato__Late_blight', "
-        "'Tomato__Leaf_Mold', 'Tomato_Septoria_leaf_spot', 'Tomato__Spider_mites Two-spotted_spider_mite', "
-        "'Tomato__Target_Spot', 'Tomato_Tomato_Yellow_Leaf_Curl_Virus', 'Tomato__Tomato_mosaic_virus', "
-        "'Tomato___healthy'."
-    )
-
+    st.write("Try uploading a leaf image to see how the AI model detects its disease.")
+    
     classes = [
-        "Apple__Apple_scab", "Apple_Black_rot", "Apple_Cedar_apple_rust", "Apple__healthy",
-        "Blueberry__healthy", "Cherry_healthy", "Corn__Cercospora_leaf_spot Gray_leaf_spot",
-        "Corn__Common_rust", "Corn_Northern_Leaf_Blight", "Corn_healthy", "Grape__Black_rot",
-        "Grape__Esca(Black_Measles)", "Grape__Leaf_blight(Isariopsis_Leaf_Spot)", "Grape___healthy",
-        "Orange__Haunglongbing(Citrus_greening)", "Peach__Bacterial_spot", "Peach__healthy",
-        "Pepper,bell_Bacterial_spot", "Pepper,_bell_healthy", "Potato__Early_blight",
-        "Potato__Late_blight", "Potato_healthy", "Raspberry_healthy", "Soybean__healthy",
-        "Squash__Powdery_mildew", "Strawberry_Leaf_scorch", "Strawberry__healthy",
-        "Tomato__Bacterial_spot", "Tomato_Early_blight", "Tomato__Late_blight",
-        "Tomato__Leaf_Mold", "Tomato__Septoria_leaf_spot", 
-        "Tomato__Spider_mites Two-spotted_spider_mite", "Tomato__Target_Spot", 
-        "Tomato__Tomato_Yellow_Leaf_Curl_Virus", "Tomato__Tomato_mosaic_virus", 
-        "Tomato___healthy", "Background_without_leaves",
+        "Apple___Apple_scab", "Apple___Black_rot", "Apple___Cedar_apple_rust", "Apple___healthy",
+        "Background_without_leaves", "Blueberry___healthy", "Cherry___healthy",
+        "Corn___Cercospora_leaf_spot Gray_leaf_spot", "Corn___Common_rust", "Corn___Northern_Leaf_Blight",
+        "Corn___healthy", "Grape___Black_rot", "Grape___Esca_(Black_Measles)",
+        "Grape___Leaf_blight_(Isariopsis_Leaf_Spot)", "Grape___healthy", "Orange___Haunglongbing_(Citrus_greening)",
+        "Peach___Bacterial_spot", "Peach___healthy", "Pepper,_bell___Bacterial_spot",
+        "Pepper,_bell___healthy", "Potato___Early_blight", "Potato___Late_blight", "Potato___healthy",
+        "Raspberry___healthy", "Soybean___healthy", "Squash___Powdery_mildew", "Strawberry___Leaf_scorch",
+        "Strawberry___healthy", "Tomato___Bacterial_spot", "Tomato___Early_blight", "Tomato___Late_blight",
+        "Tomato___Leaf_Mold", "Tomato___Septoria_leaf_spot", "Tomato___Spider_mites Two-spotted_spider_mite",
+        "Tomato___Target_Spot", "Tomato___Tomato_Yellow_Leaf_Curl_Virus", "Tomato___Tomato_mosaic_virus",
+        "Tomato___healthy"
     ]
 
     classes_and_descriptions = {
@@ -93,14 +76,14 @@ elif page == "Prediction":
         "Corn___Northern_Leaf_Blight": "Corn with Northern Leaf Blight disease detected.",
         "Corn___healthy": "Healthy corn leaf detected.",
         "Grape___Black_rot": "Grape with Black rot disease detected.",
-        "Grape__Esca(Black_Measles)": "Grape with Esca (Black Measles) disease detected.",
-        "Grape__Leaf_blight(Isariopsis_Leaf_Spot)": "Grape with Leaf blight (Isariopsis Leaf Spot) disease detected.",
+        "Grape___Esca_(Black_Measles)": "Grape with Esca (Black Measles) disease detected.",
+        "Grape___Leaf_blight_(Isariopsis_Leaf_Spot)": "Grape with Leaf blight (Isariopsis Leaf Spot) disease detected.",
         "Grape___healthy": "Healthy grape leaf detected.",
-        "Orange__Haunglongbing(Citrus_greening)": "Orange with Haunglongbing (Citrus greening) disease detected.",
+        "Orange___Haunglongbing_(Citrus_greening)": "Orange with Haunglongbing (Citrus greening) disease detected.",
         "Peach___Bacterial_spot": "Peach with Bacterial spot disease detected.",
         "Peach___healthy": "Healthy peach leaf detected.",
-        "Pepper,bell__Bacterial_spot": "Bell pepper with Bacterial spot disease detected.",
-        "Pepper,bell__healthy": "Healthy bell pepper leaf detected.",
+        "Pepper,_bell___Bacterial_spot": "Bell pepper with Bacterial spot disease detected.",
+        "Pepper,_bell___healthy": "Healthy bell pepper leaf detected.",
         "Potato___Early_blight": "Potato with Early blight disease detected.",
         "Potato___Late_blight": "Potato with Late blight disease detected.",
         "Potato___healthy": "Healthy potato leaf detected.",
@@ -114,7 +97,7 @@ elif page == "Prediction":
         "Tomato___Late_blight": "Tomato leaf with Late blight disease detected.",
         "Tomato___Leaf_Mold": "Tomato leaf with Leaf Mold disease detected.",
         "Tomato___Septoria_leaf_spot": "Tomato leaf with Septoria leaf spot disease detected.",
-        "Tomato___Spider_mites Two-spotted_spider_mite": "Tomato leaf with Spider mites or Two-spotted spider mite disease detected.",
+        "Tomato___Spider_mites Two-spotted_spider_mite": "Tomato leaf with Spider mites or Two-spotted spider mite detected.",
         "Tomato___Target_Spot": "Tomato leaf with Target Spot disease detected.",
         "Tomato___Tomato_Yellow_Leaf_Curl_Virus": "Tomato leaf with Tomato Yellow Leaf Curl Virus disease detected.",
         "Tomato___Tomato_mosaic_virus": "Tomato leaf with Tomato mosaic virus disease detected.",
@@ -134,7 +117,7 @@ elif page == "Prediction":
         model_input = np.expand_dims(model_input, axis=0)
 
         # Load the model (ensure the model path is correct)
-        model = load_model('models/export.h5')
+        model = load_model( "./models/export.pkl")
 
         # Make prediction
         prediction = model.predict(model_input)
@@ -147,27 +130,122 @@ elif page == "Prediction":
 
 # Charts Page
 elif page == "Charts":
-    st.title("Analysis of Plant Diseases")
+   st.subheader("Charts and Visualizations")
 
-    # Load data (ensure the CSV path is correct)
-    data = pd.read_csv('path/to/your/data.csv')
+  
+   
+   # Sample data for accuracy and loss
+    epochs = range(1, 21)
+    accuracy = [0.7, 0.75, 0.78, 0.82, 0.85, 0.87, 0.88, 0.89, 0.9, 0.91, 0.91, 0.92, 0.92, 0.93, 0.93, 0.94, 0.94, 0.95, 0.95, 0.95]
+    val_accuracy = [0.68, 0.72, 0.75, 0.8, 0.83, 0.85, 0.86, 0.87, 0.88, 0.89, 0.89, 0.9, 0.91, 0.91, 0.92, 0.92, 0.92, 0.93, 0.93, 0.94]
+    loss = [0.8, 0.75, 0.72, 0.7, 0.68, 0.65, 0.63, 0.61, 0.59, 0.58, 0.56, 0.54, 0.53, 0.52, 0.51, 0.5, 0.49, 0.48, 0.47, 0.46]
+    val_loss = [0.82, 0.78, 0.74, 0.72, 0.7, 0.68, 0.66, 0.65, 0.63, 0.62, 0.6, 0.59, 0.58, 0.57, 0.56, 0.55, 0.54, 0.53, 0.52, 0.51]
 
-    st.subheader("Disease Distribution")
-    plt.figure(figsize=(10, 5))
-    sns.countplot(data=data, x='Disease', order=data['Disease'].value_counts().index)
-    plt.xticks(rotation=45)
-    st.pyplot(plt)
+    # Plot Training and Validation Accuracy
+    fig, axs = plt.subplots(2, 1, figsize=(14, 10))
+    sns.lineplot(x=epochs, y=accuracy, ax=axs[0], label='Training Accuracy', color='b', marker='o')
+    sns.lineplot(x=epochs, y=val_accuracy, ax=axs[0], label='Validation Accuracy', color='g', marker='o')
+    axs[0].set_title('Model Accuracy Over Epochs')
+    axs[0].set_xlabel('Epochs')
+    axs[0].set_ylabel('Accuracy')
+    axs[0].legend()
 
-    st.subheader("Disease Severity Over Time")
-    # Assuming you have a 'Date' and 'Severity' columns in your data
-    data['Date'] = pd.to_datetime(data['Date'])
-    severity_over_time = data.groupby('Date').mean()['Severity']
-    plt.figure(figsize=(10, 5))
-    plt.plot(severity_over_time.index, severity_over_time.values)
-    plt.title("Average Disease Severity Over Time")
-    plt.xlabel("Date")
-    plt.ylabel("Average Severity")
-    st.pyplot(plt)
+    # Plot Training and Validation Loss
+    sns.lineplot(x=epochs, y=loss, ax=axs[1], label='Training Loss', color='r', marker='o')
+    sns.lineplot(x=epochs, y=val_loss, ax=axs[1], label='Validation Loss', color='orange', marker='o')
+    axs[1].set_title('Model Loss Over Epochs')
+    axs[1].set_xlabel('Epochs')
+    axs[1].set_ylabel('Loss')
+    axs[1].legend()
+
+    plt.tight_layout()
+    st.pyplot(fig)
+
+    st.subheader("Model Performance Comparison")
+
+    # Sample data to illustrate performance
+    data = {
+        'Model': ['ResNet34', 'ResNet50', 'VGG16', 'VGG19', 'AlexNet', 'InceptionV3', 'DenseNet121', 'EfficientNetB0', 'SqueezeNet', 'Xception'],
+        'Accuracy (%)': [99.0, 98.5, 97.8, 97.4, 98.0, 96.5, 97.0, 96.9, 95.7, 96.0],
+        'Precision (%)': [98.7, 98.0, 97.5, 97.0, 97.8, 96.0, 96.5, 95.8, 95.2, 96.1],
+        'Recall (%)': [99.1, 98.7, 97.9, 97.5, 98.2, 96.8, 97.2, 96.5, 95.9, 96.3],
+        'F1-Score (%)': [98.9, 98.3, 97.7, 97.2, 97.9, 96.4, 96.8, 96.2, 95.6, 96.1],
+        'Training Time (hrs)': [12, 14, 10, 11, 8, 15, 13, 14, 9, 16],
+        'Number of Parameters (M)': [21, 25, 138, 143, 61, 24, 8, 5, 1, 22],
+    }
+
+    df = pd.DataFrame(data)
+
+    # Set the aesthetic style of the plots
+    sns.set_style("whitegrid")
+
+    # Create subplots
+    fig, axs = plt.subplots(5, 2, figsize=(16, 24))
+
+    # Plot 1: Model Accuracy
+    sns.barplot(x='Accuracy (%)', y='Model', data=df, ax=axs[0, 0], palette='Blues_d', orient='h')
+    axs[0, 0].set_title('Model Accuracy')
+    for index, value in enumerate(df['Accuracy (%)']):
+        axs[0, 0].text(value, index, f'{value:.1f}%', va='center')
+
+    # Plot 2: Model Precision
+    sns.barplot(x='Precision (%)', y='Model', data=df, ax=axs[0, 1], palette='Greens_d', orient='h')
+    axs[0, 1].set_title('Model Precision')
+    for index, value in enumerate(df['Precision (%)']):
+        axs[0, 1].text(value, index, f'{value:.1f}%', va='center')
+
+    # Plot 3: Model Recall
+    sns.barplot(x='Recall (%)', y='Model', data=df, ax=axs[1, 0], palette='Reds_d', orient='h')
+    axs[1, 0].set_title('Model Recall')
+    for index, value in enumerate(df['Recall (%)']):
+        axs[1, 0].text(value, index, f'{value:.1f}%', va='center')
+
+    # Plot 4: Model F1-Score
+    sns.barplot(x='F1-Score (%)', y='Model', data=df, ax=axs[1, 1], palette='Purples_d', orient='h')
+    axs[1, 1].set_title('Model F1-Score')
+    for index, value in enumerate(df['F1-Score (%)']):
+        axs[1, 1].text(value, index, f'{value:.1f}%', va='center')
+
+    # Plot 5: Training Time
+    sns.barplot(x='Training Time (hrs)', y='Model', data=df, ax=axs[2, 0], palette='Oranges_d', orient='h')
+    axs[2, 0].set_title('Training Time')
+    for index, value in enumerate(df['Training Time (hrs)']):
+        axs[2, 0].text(value, index, f'{value:.1f} hrs', va='center')
+
+    # Plot 6: Number of Parameters
+    sns.barplot(x='Number of Parameters (M)', y='Model', data=df, ax=axs[2, 1], palette='Greys_d', orient='h')
+    axs[2, 1].set_title('Number of Parameters')
+    for index, value in enumerate(df['Number of Parameters (M)']):
+        axs[2, 1].text(value, index, f'{value:.1f} M', va='center')
+
+    # Plot 7: Accuracy Comparison (Highlighting ResNet34)
+    sns.barplot(x='Accuracy (%)', y='Model', data=df, ax=axs[3, 0], palette='coolwarm', orient='h')
+    axs[3, 0].set_title('Accuracy Comparison (Highlighting ResNet34)')
+    axs[3, 0].axvline(x=99.0, color='r', linestyle='--', label='ResNet34 Accuracy')
+    axs[3, 0].legend()
+    for index, value in enumerate(df['Accuracy (%)']):
+        axs[3, 0].text(value, index, f'{value:.1f}%', va='center')
+
+    # Plot 8: Precision Comparison
+    sns.barplot(x='Precision (%)', y='Model', data=df, ax=axs[3, 1], palette='viridis', orient='h')
+    axs[3, 1].set_title('Precision Comparison')
+    for index, value in enumerate(df['Precision (%)']):
+        axs[3, 1].text(value, index, f'{value:.1f}%', va='center')
+
+    # Plot 9: Recall Comparison
+    sns.barplot(x='Recall (%)', y='Model', data=df, ax=axs[4, 0], palette='magma', orient='h')
+    axs[4, 0].set_title('Recall Comparison')
+    for index, value in enumerate(df['Recall (%)']):
+        axs[4, 0].text(value, index, f'{value:.1f}%', va='center')
+
+    # Plot 10: F1-Score Comparison
+    sns.barplot(x='F1-Score (%)', y='Model', data=df, ax=axs[4, 1], palette='plasma', orient='h')
+    axs[4, 1].set_title('F1-Score Comparison')
+    for index, value in enumerate(df['F1-Score (%)']):
+        axs[4, 1].text(value, index, f'{value:.1f}%', va='center')
+
+    plt.tight_layout()
+    st.pyplot(fig)
 
 # Disclaimer Page
 elif page == "Disclaimer":
