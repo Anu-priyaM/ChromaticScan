@@ -157,7 +157,7 @@ classes_and_descriptions = {
 }
 
  # Define the functions to load images
-    def load_uploaded_image(file):
+def load_uploaded_image(file):
         file_bytes = np.asarray(bytearray(file.read()), dtype=np.uint8)
         opencv_image = cv2.imdecode(file_bytes, 1)
         return opencv_image
