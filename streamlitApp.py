@@ -1,7 +1,8 @@
 import streamlit as st
 from PIL import Image
 import numpy as np
-from tensorflow.keras.models import load_model
+from keras.models import load_model
+from keras.layers import TFSMLayer
 import pandas as pd
 import os
 import matplotlib.pyplot as plt
@@ -10,6 +11,13 @@ import pathlib
 import platform
 
 # Platform-specific path handling
+import pickle
+with open('./models/export.pkl', 'rb') as file:
+    model = pickle.load(file) 
+
+model.save('./models/export.h5')  # For legacy format
+ # For the new Keras format
+
 plt_platform = platform.system()
 if plt_platform == "Windows":
     pathlib.PosixPath = pathlib.WindowsPath
@@ -181,9 +189,9 @@ def load_model_file(model_path):
         return None
 
 # Function for Plant Disease Detection
-export_file_path = "./models/export.pkl"
+export_file_path = "./models/export.h5"
 def Plant_Disease_Detection(image):
-    model = load_model_file("./models/export.pkl")
+    model = load_model_file("./models/export.h5")
     if model is None:
         return None, None
 
