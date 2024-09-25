@@ -4,13 +4,10 @@ import io
 import cv2
 from tensorflow.keras.models import load_model
 import numpy as np
-from tensorflow.keras.preprocessing.image import load_img, img_to_array
 from fastai import *
 from fastai.vision import *
 from fastai.imports import *
 from fastai.vision.all import *
-import cv2
-
 import pathlib
 
 plt = platform.system()
@@ -22,7 +19,6 @@ np.set_printoptions(suppress=True)
 
 # Set up the page layout
 st.set_page_config(page_title="ChromaticScan", page_icon=":camera:")
-
 
 st.title("ChromaticScan")
 
@@ -54,12 +50,12 @@ classes = [
     "Apple___Cedar_apple_rust",
     "Apple___healthy",
     "Blueberry___healthy",
-    "Cherry_(including_sour)___Powdery_mildew",
-    "Cherry_(including_sour)___healthy",
-    "Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot",
-    "Corn_(maize)___Common_rust_",
-    "Corn_(maize)___Northern_Leaf_Blight",
-    "Corn_(maize)___healthy",
+    "Cherry___Powdery_mildew",
+    "Cherry___healthy",
+    "Corn___Cercospora_leaf_spot Gray_leaf_spot",
+    "Corn___Common_rust",
+    "Corn___Northern_Leaf_Blight",
+    "Corn___healthy",
     "Grape___Black_rot",
     "Grape___Esca_(Black_Measles)",
     "Grape___Leaf_blight_(Isariopsis_Leaf_Spot)",
@@ -90,19 +86,18 @@ classes = [
     "Background_without_leaves",
 ]
 
-
 classes_and_descriptions = {
     "Apple___Apple_scab": "Apple with Apple scab disease detected.",
-    "Apple___Black_rot": "Apple with Black rot disease detected",
+    "Apple___Black_rot": "Apple with Black rot disease detected.",
     "Apple___Cedar_apple_rust": "Apple with Cedar apple rust disease detected.",
     "Apple___healthy": "Healthy apple leaf detected.",
     "Blueberry___healthy": "Healthy blueberry leaf detected.",
-    "Cherry_(including_sour)___Powdery_mildew": "Cherry with Powdery mildew disease detected.",
-    "Cherry_(including_sour)___healthy": "Healthy cherry leaf detected.",
-    "Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot": "Corn with Cercospora leaf spot or Gray leaf spot disease detected.",
-    "Corn_(maize)___Common_rust_": "Corn with Common rust disease detected.",
-    "Corn_(maize)___Northern_Leaf_Blight": "Corn with Northern Leaf Blight disease detected.",
-    "Corn_(maize)___healthy": "Healthy corn leaf detected.",
+    "Cherry___Powdery_mildew": "Cherry with Powdery mildew disease detected.",
+    "Cherry___healthy": "Healthy cherry leaf detected.",
+    "Corn___Cercospora_leaf_spot Gray_leaf_spot": "Corn with Cercospora leaf spot or Gray leaf spot disease detected.",
+    "Corn___Common_rust": "Corn with Common rust disease detected.",
+    "Corn___Northern_Leaf_Blight": "Corn with Northern Leaf Blight disease detected.",
+    "Corn___healthy": "Healthy corn leaf detected.",
     "Grape___Black_rot": "Grape with Black rot disease detected.",
     "Grape___Esca_(Black_Measles)": "Grape with Esca (Black Measles) disease detected.",
     "Grape___Leaf_blight_(Isariopsis_Leaf_Spot)": "Grape with Leaf blight (Isariopsis Leaf Spot) disease detected.",
@@ -114,8 +109,8 @@ classes_and_descriptions = {
     "Pepper,_bell___healthy": "Healthy bell pepper leaf detected.",
     "Potato___Early_blight": "Potato with Early blight disease detected.",
     "Potato___Late_blight": "Potato with Late blight disease detected.",
-    "Potato___healthy": "Healthy potato leaf detected",
-    "Raspberry___healthy": "Healthy raspberry leaf detected",
+    "Potato___healthy": "Healthy potato leaf detected.",
+    "Raspberry___healthy": "Healthy raspberry leaf detected.",
     "Soybean___healthy": "Healthy soybean leaf detected.",
     "Squash___Powdery_mildew": "Squash with Powdery mildew disease detected.",
     "Strawberry___Leaf_scorch": "Strawberry with Leaf scorch disease detected.",
@@ -129,7 +124,7 @@ classes_and_descriptions = {
     "Tomato___Target_Spot": "Tomato leaf with Target Spot disease detected.",
     "Tomato___Tomato_Yellow_Leaf_Curl_Virus": "Tomato leaf with Tomato Yellow Leaf Curl Virus disease detected.",
     "Tomato___Tomato_mosaic_virus": "Tomato leaf with Tomato mosaic virus disease detected.",
-    "Tomato___healthy": "Healthy tomato leaf.",
+    "Tomato___healthy": "Healthy tomato leaf detected.",
     "Background_without_leaves": "No plant leaf detected in the image.",
 }
 
@@ -173,14 +168,24 @@ elif input_method == "Camera Input":
 export_file_path = "./models/export.pkl"
 
 
-def Plant_Disease_Detection(_img_file_path):
+def Plant_Disease_Detection(img_file_path):
     model = load_learner(export_file_path, "export.pkl")
-    prediction = model.predict(img_file_path)[0]
+    # Get prediction and confidence score
+    prediction, idx, probabilities = model.predict(img_file_path)
+    
+    # Extract the confidence score
+    confidence_score = probabilities[idx].item()
+
+    # Check if prediction is valid
     if prediction not in classes:
         prediction_sentence = f"The uploaded image is {prediction}, which is not compatible with the application. Please upload an image of a plant leaf for disease detection."
-        return prediction_sentence
+        return prediction_sentence, None
+
+    # Generate prediction message with confidence score
     prediction_sentence = classes_and_descriptions[prediction]
-    return prediction_sentence
+    confidence_message = f"Confidence: {confidence_score * 100:.2f}%"
+    
+    return prediction_sentence, confidence_message
 
 
 submit = st.button(label="Submit Leaf Image")
@@ -190,9 +195,12 @@ if submit:
         img_file_path = uploaded_file_img
     elif input_method == "Camera Input":
         img_file_path = camera_file_img
-    prediction = Plant_Disease_Detection(img_file_path)
+
+    prediction, confidence_message = Plant_Disease_Detection(img_file_path)
     with st.spinner(text="This may take a moment..."):
         st.write(prediction)
+        if confidence_message:
+            st.write(confidence_message)
 
 footer = """
 <div style="text-align: center; font-size: medium; margin-top:50px;">
