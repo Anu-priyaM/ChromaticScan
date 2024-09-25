@@ -133,31 +133,23 @@ classes_and_descriptions = {
     "Background_without_leaves": "No plant leaf detected in the image.",
 }
 
-
 # Define the functions to load images
 def load_uploaded_image(file):
     file_bytes = np.asarray(bytearray(file.read()), dtype=np.uint8)
     opencv_image = cv2.imdecode(file_bytes, 1)
     return opencv_image
 
-
 # Set up the sidebar
 st.subheader("Select Image Input Method")
-input_method = st.radio(
-    "options", ["File Uploader", "Camera Input"], label_visibility="collapsed"
-)
+input_method = st.radio("options", ["File Uploader", "Camera Input"], label_visibility="collapsed")
 
 # Check which input method was selected
 if input_method == "File Uploader":
-    uploaded_file = st.file_uploader(
-        "Choose an image file", type=["jpg", "jpeg", "png"]
-    )
+    uploaded_file = st.file_uploader("Choose an image file", type=["jpg", "jpeg", "png"])
     if uploaded_file is not None:
         uploaded_file_img = load_uploaded_image(uploaded_file)
         st.image(uploaded_file_img, caption="Uploaded Image", width=300)
         st.success("Image uploaded successfully!")
-    else:
-        st.warning("Please upload an image file.")
 
 elif input_method == "Camera Input":
     st.warning("Please allow access to your camera.")
@@ -166,22 +158,27 @@ elif input_method == "Camera Input":
         camera_file_img = load_uploaded_image(camera_image_file)
         st.image(camera_file_img, caption="Camera Input Image", width=300)
         st.success("Image clicked successfully!")
-    else:
-        st.warning("Please click an image.")
 
 # model file path
 export_file_path = "./models/export.pkl"
 
+def Plant_Disease_Detection(img):
+    model = load_learner(export_file_path)
+    
+    # Preprocess the image
+    img = cv2.resize(img, (256, 256))
+    img = np.array(img) / 255.0
+    img = np.expand_dims(img, axis=0)
 
-def Plant_Disease_Detection(_img_file_path):
-    model = load_learner(export_file_path, "export.pkl")
-    prediction = model.predict(img_file_path)[0]
-    if prediction not in classes:
-        prediction_sentence = f"The uploaded image is {prediction}, which is not compatible with the application. Please upload an image of a plant leaf for disease detection."
-        return prediction_sentence
-    prediction_sentence = classes_and_descriptions[prediction]
-    return prediction_sentence
+    # Make predictions
+    prediction = model.predict(img)
+    predicted_class = prediction[0]
+    confidence = prediction[2]
 
+    # Prepare confidence levels
+    confidence_levels = [f"{conf:.2%}" for conf in confidence]
+
+    return predicted_class, confidence, confidence_levels
 
 submit = st.button(label="Submit Leaf Image")
 if submit:
@@ -190,9 +187,103 @@ if submit:
         img_file_path = uploaded_file_img
     elif input_method == "Camera Input":
         img_file_path = camera_file_img
-    prediction = Plant_Disease_Detection(img_file_path)
-    with st.spinner(text="This may take a moment..."):
-        st.write(prediction)
+    
+    prediction, confidence, confidence_levels = Plant_Disease_Detection(img_file_path)
+
+    # Display Prediction and Confidence Levels
+    st.write(classes_and_descriptions[prediction])
+    
+    # Pie chart for confidence levels
+    labels = classes
+    sizes = confidence.tolist()
+    
+    fig, ax = plt.subplots()
+    ax.pie(sizes, labels=labels, autopct='%1.1f%%', startangle=90)
+    ax.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
+
+    st.subheader("Confidence Levels for Each Class")
+    st.pyplot(fig)
+
+footer = """
+<div style="text-align: center; font-size: medium; margin-top:50px;">
+    If you find ChromaticScan useful or interesting, please consider starring it on GitHub.
+    <hr>
+    <a href="https://github.com/SaiJeevanPuchakayala/ChromaticScan" target="_blank">
+    <img src="https://img.shields.io/github/stars/SaiJeevanPuchakayala/ChromaticScan.svg?style=social" alt="GitHub stars">
+  </a>
+</div>
+"""
+
+st.markdown(footer, unsafe_allow_html=True)# Define the functions to load images
+def load_uploaded_image(file):
+    file_bytes = np.asarray(bytearray(file.read()), dtype=np.uint8)
+    opencv_image = cv2.imdecode(file_bytes, 1)
+    return opencv_image
+
+# Set up the sidebar
+st.subheader("Select Image Input Method")
+input_method = st.radio("options", ["File Uploader", "Camera Input"], label_visibility="collapsed")
+
+# Check which input method was selected
+if input_method == "File Uploader":
+    uploaded_file = st.file_uploader("Choose an image file", type=["jpg", "jpeg", "png"])
+    if uploaded_file is not None:
+        uploaded_file_img = load_uploaded_image(uploaded_file)
+        st.image(uploaded_file_img, caption="Uploaded Image", width=300)
+        st.success("Image uploaded successfully!")
+
+elif input_method == "Camera Input":
+    st.warning("Please allow access to your camera.")
+    camera_image_file = st.camera_input("Click an Image")
+    if camera_image_file is not None:
+        camera_file_img = load_uploaded_image(camera_image_file)
+        st.image(camera_file_img, caption="Camera Input Image", width=300)
+        st.success("Image clicked successfully!")
+
+# model file path
+export_file_path = "./models/export.pkl"
+
+def Plant_Disease_Detection(img):
+    model = load_learner(export_file_path)
+    
+    # Preprocess the image
+    img = cv2.resize(img, (256, 256))
+    img = np.array(img) / 255.0
+    img = np.expand_dims(img, axis=0)
+
+    # Make predictions
+    prediction = model.predict(img)
+    predicted_class = prediction[0]
+    confidence = prediction[2]
+
+    # Prepare confidence levels
+    confidence_levels = [f"{conf:.2%}" for conf in confidence]
+
+    return predicted_class, confidence, confidence_levels
+
+submit = st.button(label="Submit Leaf Image")
+if submit:
+    st.subheader("Output")
+    if input_method == "File Uploader":
+        img_file_path = uploaded_file_img
+    elif input_method == "Camera Input":
+        img_file_path = camera_file_img
+    
+    prediction, confidence, confidence_levels = Plant_Disease_Detection(img_file_path)
+
+    # Display Prediction and Confidence Levels
+    st.write(classes_and_descriptions[prediction])
+    
+    # Pie chart for confidence levels
+    labels = classes
+    sizes = confidence.tolist()
+    
+    fig, ax = plt.subplots()
+    ax.pie(sizes, labels=labels, autopct='%1.1f%%', startangle=90)
+    ax.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
+
+    st.subheader("Confidence Levels for Each Class")
+    st.pyplot(fig)
 
 footer = """
 <div style="text-align: center; font-size: medium; margin-top:50px;">
