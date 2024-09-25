@@ -177,14 +177,27 @@ elif input_method == "Camera Input":
 # model file path
 export_file_path = "./models/export.pkl"
 
-def Plant_Disease_Detection(_img_file_path):
+def Plant_Disease_Detection(img_array):
+    # Load the model
     model = load_learner(export_file_path, "export.pkl")
-    prediction = model.predict(_img_file_path)[0]
+    
+    # Preprocess the image
+    img_resized = cv2.resize(img_array, (224, 224))  # Resize to match model input
+    img_normalized = img_resized / 255.0  # Normalize the image
+    img_reshaped = np.reshape(img_normalized, (1, 224, 224, 3))  # Add batch dimension
+    
+    # Get the prediction
+    prediction = model.predict(img_reshaped)[0]
+    
     if prediction not in classes:
         prediction_sentence = f"The uploaded image is {prediction}, which is not compatible with the application. Please upload an image of a plant leaf for disease detection."
-        return prediction_sentence
+        return prediction_sentence, None
+    
+    # Assuming the model returns class name directly and also returns a confidence score
+    confidence = model.predict(img_reshaped)[2].max() * 100  # Get confidence score
     prediction_sentence = classes_and_descriptions[prediction]
-    return prediction_sentence
+    
+    return prediction_sentence, confidence
 
 submit = st.button(label="Submit Leaf Image")
 if submit:
@@ -194,44 +207,47 @@ if submit:
     elif input_method == "Camera Input":
         img_file_path = camera_file_img
 
-    predicted_class, confidence = Plant_Disease_Detection(img_file_path)
-    with st.spinner(text="This may take a moment..."):
-        if predicted_class:
-            st.write(f"Prediction: {predicted_class}")
-            st.write(f"Description: {classes_and_descriptions.get(predicted_class, 'No description available.')}")
-            st.write(f"Confidence: {confidence:.2f}%")
-            
-            # Prepare data for the table
-            recommendation = remedies.get(predicted_class, 'No recommendation available.')
-            status = "Unhealthy" if "healthy" not in predicted_class else "Healthy"
-            
-            data = {
-                "Details": ["Leaf Status", "Disease Name", "Recommendation", "Accuracy"],
-                "Values": [
-                    status,
-                    predicted_class.split('___')[1] if "___" in predicted_class else 'Healthy',
-                    recommendation,
-                    f"{confidence:.2f}%"
-                ]
-            }
-            df = pd.DataFrame(data)
-            st.table(df)
-            
-            # Visualization: Pie Chart for Confidence
-            fig, ax = plt.subplots()
-            ax.pie(
-                [confidence, 100-confidence],
-                labels=[f'Confidence: {confidence:.2f}%', ''],
-                autopct='%1.1f%%',
-                colors=['#4CAF50', '#D3D3D3'],
-                startangle=90
-            )
-            ax.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
-            st.pyplot(fig)
-        else:
-            st.error("Error in prediction. Please try again.")
-else:
-    st.warning("Please upload or capture an image first.")
+    if img_file_path is not None:
+        predicted_class, confidence = Plant_Disease_Detection(img_file_path)
+        
+        with st.spinner(text="This may take a moment..."):
+            if predicted_class:
+                st.write(f"Prediction: {predicted_class}")
+                st.write(f"Description: {classes_and_descriptions.get(predicted_class, 'No description available.')}")
+                st.write(f"Confidence: {confidence:.2f}%")
+                
+                # Prepare data for the table
+                recommendation = remedies.get(predicted_class, 'No recommendation available.')
+                status = "Unhealthy" if "healthy" not in predicted_class else "Healthy"
+                
+                data = {
+                    "Details": ["Leaf Status", "Disease Name", "Recommendation", "Accuracy"],
+                    "Values": [
+                        status,
+                        predicted_class.split('___')[1] if "___" in predicted_class else 'Healthy',
+                        recommendation,
+                        f"{confidence:.2f}%"
+                    ]
+                }
+                df = pd.DataFrame(data)
+                st.table(df)
+                
+                # Visualization: Pie Chart for Confidence
+                fig, ax = plt.subplots()
+                ax.pie(
+                    [confidence, 100-confidence],
+                    labels=[f'Confidence: {confidence:.2f}%', ''],
+                    autopct='%1.1f%%',
+                    colors=['#4CAF50', '#D3D3D3'],
+                    startangle=90
+                )
+                ax.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
+                st.pyplot(fig)
+            else:
+                st.error("Error in prediction. Please try again.")
+    else:
+        st.error("No image data found. Please upload or capture an image first.")
+
 
 footer = """
 <div style="text-align: center; font-size: medium; margin-top:50px;">
