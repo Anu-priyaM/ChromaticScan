@@ -39,9 +39,6 @@ with st.sidebar:
         "The application will infer one label out of 39 labels, including diseases like Apple scab, Early blight, Late blight, and more."
     )
 
-# Class definitions and descriptions
-classes = [
-    # (Add your plant disease class names here)
     classes = [
     "Apple___Apple_scab",
     "Apple___Black_rot",
