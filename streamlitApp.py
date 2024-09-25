@@ -2,16 +2,11 @@ import streamlit as st
 from PIL import Image
 import io
 import cv2
-from tensorflow.keras.models import load_model
 import numpy as np
-from fastai import *
-from fastai.vision import *
-from fastai.imports import *
-from fastai.vision.all import *
-import pathlib
+import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-import pandas as pd
+from tensorflow.keras.models import load_model
 
 # Set up the page layout
 st.set_page_config(page_title="ChromaticScan", page_icon=":camera:")
@@ -29,25 +24,16 @@ with st.sidebar:
     st.image(img)
     st.subheader("About ChromaticScan")
     st.write(
-        "ChromaticScan is a state-of-the-art convolutional neural network (CNN) algorithm that is specifically designed for detecting plant diseases. It utilizes transfer learning by fine-tuning the ResNet 34 model on a large dataset of leaf images to achieve an impressive 99.2% accuracy in detecting various plant diseases. The algorithm is trained to identify specific patterns and features in the leaf images that are indicative of different types of diseases, such as leaf spots, blights, and wilts."
+        "ChromaticScan is a state-of-the-art convolutional neural network (CNN) algorithm designed for detecting plant diseases."
     )
 
-    st.write(
-        "ChromaticScan is designed to be highly robust and accurate, with the ability to detect plant diseases in a wide range of conditions and environments. It can be used to quickly and accurately diagnose plant diseases, allowing farmers and gardeners to take immediate action to prevent the spread of the disease and minimize crop losses. With its high level of accuracy and ease of use, ChromaticScan is poised to revolutionize the way plant diseases are detected and managed in the agricultural industry."
-    )
-
-    st.write(
-        "The application will infer the one label out of 39 labels, as follows: 'Apple___Apple_scab', 'Apple___Black_rot', 'Apple___Cedar_apple_rust', 'Apple___healthy', 'Background_without_leaves', 'Blueberry___healthy', 'Cherry___healthy', 'Corn___Cercospora_leaf_spot Gray_leaf_spot', 'Corn___Common_rust', 'Corn___Northern_Leaf_Blight', 'Corn___healthy', 'Grape___Black_rot', 'Grape___Esca_(Black_Measles)', 'Grape___Leaf_blight_(Isariopsis_Leaf_Spot)', 'Grape___healthy', 'Orange___Haunglongbing_(Citrus_greening)', 'Peach___Bacterial_spot', 'Peach___healthy', 'Pepper,_bell___Bacterial_spot', 'Pepper,_bell___healthy', 'Potato___Early_blight', 'Potato___Late_blight', 'Potato___healthy', 'Raspberry___healthy', 'Soybean___healthy', 'Squash___Powdery_mildew', 'Strawberry___Leaf_scorch', 'Strawberry___healthy', 'Tomato___Bacterial_spot', 'Tomato___Early_blight', 'Tomato___Late_blight', 'Tomato___Leaf_Mold', 'Tomato___Septoria_leaf_spot', 'Tomato___Spider_mites Two-spotted_spider_mite', 'Tomato___Target_Spot', 'Tomato___Tomato_Yellow_Leaf_Curl_Virus', 'Tomato___Tomato_mosaic_virus', 'Tomato___healthy'."
-    )
-
-# Class definitions and descriptions
+# Class definitions
 classes = [
     "Apple___Apple_scab",
     "Apple___Black_rot",
     "Apple___Cedar_apple_rust",
     "Apple___healthy",
     "Blueberry___healthy",
-    "Cherry___Powdery_mildew",
     "Cherry___healthy",
     "Corn___Cercospora_leaf_spot Gray_leaf_spot",
     "Corn___Common_rust",
@@ -126,12 +112,18 @@ classes_and_descriptions = {
 }
 
 
+# Load the model once
+@st.cache_resource
+def load_model_once():
+    return load_model('plant_disease_model.h5')
+
+model = load_model_once()
+
 # Define the functions to load images
 def load_uploaded_image(file):
     file_bytes = np.asarray(bytearray(file.read()), dtype=np.uint8)
     opencv_image = cv2.imdecode(file_bytes, 1)
     return opencv_image
-
 
 # Set up the sidebar
 st.subheader("Select Image Input Method")
@@ -145,18 +137,13 @@ if input_method == "File Uploader":
 elif input_method == "Camera Input":
     camera_file_img = st.camera_input("Take a picture of a leaf...")
 
-
-# Load the model once
-model = load_model('plant_disease_model.h5')
-
-
 # Define the prediction function
-def Plant_Disease_Detection(img_file_path):
+def Plant_Disease_Detection(img_file):
     # Load the image and preprocess it
-    if isinstance(img_file_path, str):
-        img = load_uploaded_image(open(img_file_path, "rb"))
+    if isinstance(img_file, str):
+        img = load_uploaded_image(open(img_file, "rb"))
     else:
-        img = load_uploaded_image(img_file_path)
+        img = load_uploaded_image(img_file)
 
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)  # Convert to RGB
     img = cv2.resize(img, (224, 224))  # Resize to model input size
@@ -177,7 +164,6 @@ def Plant_Disease_Detection(img_file_path):
 
     return class_name, confidence_message, probabilities
 
-
 # Handling the submission button
 submit = st.button(label="Submit Leaf Image")
 if submit:
@@ -187,38 +173,37 @@ if submit:
     elif input_method == "Camera Input":
         img_file_path = camera_file_img
 
-    prediction, confidence_message, probabilities = Plant_Disease_Detection(img_file_path)
-    
-    with st.spinner(text="This may take a moment..."):
-        st.write(prediction)
-        if confidence_message:
+    if img_file_path is not None:
+        prediction, confidence_message, probabilities = Plant_Disease_Detection(img_file_path)
+        
+        with st.spinner(text="This may take a moment..."):
+            st.write(prediction)
             st.write(confidence_message)
 
-        # Visualization
-        if probabilities is not None:
-            # Ensure probabilities is a numpy array
-            if isinstance(probabilities, list):
-                probabilities = np.array(probabilities)
-            elif hasattr(probabilities, 'numpy'):
-                probabilities = probabilities.numpy()
+            # Visualization
+            if probabilities is not None:
+                # Ensure probabilities is a numpy array
+                if isinstance(probabilities, list):
+                    probabilities = np.array(probabilities)
+                elif hasattr(probabilities, 'numpy'):
+                    probabilities = probabilities.numpy()
 
-            # Create a DataFrame for better plotting
-            prob_df = pd.DataFrame({
-                'Class': classes,
-                'Probability': probabilities
-            })
+                # Create a DataFrame for better plotting
+                prob_df = pd.DataFrame({
+                    'Class': classes,
+                    'Probability': probabilities
+                })
 
-            # Bar Chart for Probabilities
-            plt.figure(figsize=(10, 5))
-            sns.barplot(data=prob_df.sort_values('Probability', ascending=False).head(10), x='Probability', y='Class', palette='viridis')
-            plt.title("Top 10 Class Probabilities")
-            plt.xlabel("Probability")
-            plt.ylabel("Class")
-            st.pyplot(plt)
+                # Bar Chart for Probabilities
+                plt.figure(figsize=(10, 5))
+                sns.barplot(data=prob_df.sort_values('Probability', ascending=False).head(10), x='Probability', y='Class', palette='viridis')
+                plt.title("Top 10 Class Probabilities")
+                plt.xlabel("Probability")
+                plt.ylabel("Class")
+                st.pyplot(plt)
 
-            # Pie Chart for the predicted class vs others
-            if 0 <= idx < len(probabilities):
-                predicted_probability = probabilities[idx]
+                # Pie Chart for the predicted class vs others
+                predicted_probability = probabilities[np.argmax(probabilities)]
                 other_classes_probability = 1 - predicted_probability
                 
                 plt.figure(figsize=(7, 7))
@@ -231,5 +216,5 @@ if submit:
                 )
                 plt.title("Prediction Confidence Distribution")
                 st.pyplot(plt)
-            else:
-                st.error("Error: Invalid index for predicted probabilities.")
+    else:
+        st.error("Please upload an image or take a picture using the camera.")
