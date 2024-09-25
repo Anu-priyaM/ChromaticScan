@@ -163,8 +163,8 @@ def load_uploaded_image(file):
         return opencv_image
 
     # Set up the sidebar for image input method
-    st.subheader("Select Image Input Method")
-    input_method = st.radio("options", ["File Uploader", "Camera Input"], label_visibility="collapsed")
+st.subheader("Select Image Input Method")
+input_method = st.radio("options", ["File Uploader", "Camera Input"], label_visibility="collapsed")
 
     # Check which input method was selected
     if input_method == "File Uploader":
