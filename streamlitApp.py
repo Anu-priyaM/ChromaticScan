@@ -167,7 +167,7 @@ st.subheader("Select Image Input Method")
 input_method = st.radio("options", ["File Uploader", "Camera Input"], label_visibility="collapsed")
 
     # Check which input method was selected
-    if input_method == "File Uploader":
+ if input_method == "File Uploader":
         uploaded_file = st.file_uploader("Choose an image file", type=["jpg", "jpeg", "png"])
         if uploaded_file is not None:
             uploaded_file_img = load_uploaded_image(uploaded_file)
