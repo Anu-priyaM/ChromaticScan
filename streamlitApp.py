@@ -3,12 +3,13 @@ from PIL import Image
 import pandas as pd
 import io
 import cv2
-from tensorflow.keras.models import load_model
 import numpy as np
 from fastai.vision.all import *
 import pathlib
 import matplotlib.pyplot as plt
+import platform
 
+# Set platform-specific paths
 plt = platform.system()
 if plt == "Windows":
     pathlib.PosixPath = pathlib.WindowsPath
@@ -19,12 +20,14 @@ np.set_printoptions(suppress=True)
 # Set up the page layout
 st.set_page_config(page_title="ChromaticScan", page_icon=":camera:")
 
+# Title and description
 st.title("ChromaticScan")
 st.caption(
     "A ResNet 34-based Algorithm for Robust Plant Disease Detection with 99.2% Accuracy Across 39 Different Classes of Plant Leaf Images."
 )
 st.write("Try clicking a leaf image and watch how an AI Model will detect its disease.")
 
+# Sidebar content
 with st.sidebar:
     img = Image.open("./Images/leaf.png")
     st.image(img)
@@ -35,19 +38,15 @@ with st.sidebar:
         "The algorithm is trained to identify specific patterns and features in the leaf images that are indicative of different types of diseases, such as leaf spots, blights, and wilts."
     )
     st.write(
-        "ChromaticScan is designed to be highly robust and accurate, with the ability to detect plant diseases in a wide range of conditions and environments. "
-        "It can be used to quickly and accurately diagnose plant diseases, allowing farmers and gardeners to take immediate action to prevent the spread of the disease and minimize crop losses."
-    )
-    st.write(
         "The application will infer the one label out of 39 labels, as follows: 'Apple___Apple_scab', 'Apple___Black_rot', 'Apple___Cedar_apple_rust', 'Apple___healthy', 'Background_without_leaves', 'Blueberry___healthy', 'Cherry___healthy', 'Corn___Cercospora_leaf_spot Gray_leaf_spot', 'Corn___Common_rust', 'Corn___Northern_Leaf_Blight', 'Corn___healthy', 'Grape___Black_rot', 'Grape___Esca_(Black_Measles)', 'Grape___Leaf_blight_(Isariopsis_Leaf_Spot)', 'Grape___healthy', 'Orange___Haunglongbing_(Citrus_greening)', 'Peach___Bacterial_spot', 'Peach___healthy', 'Pepper,_bell___Bacterial_spot', 'Pepper,_bell___healthy', 'Potato___Early_blight', 'Potato___Late_blight', 'Potato___healthy', 'Raspberry___healthy', 'Soybean___healthy', 'Squash___Powdery_mildew', 'Strawberry___Leaf_scorch', 'Strawberry___healthy', 'Tomato___Bacterial_spot', 'Tomato___Early_blight', 'Tomato___Late_blight', 'Tomato___Leaf_Mold', 'Tomato___Septoria_leaf_spot', 'Tomato___Spider_mites Two-spotted_spider_mite', 'Tomato___Target_Spot', 'Tomato___Tomato_Yellow_Leaf_Curl_Virus', 'Tomato___Tomato_mosaic_virus', 'Tomato___healthy'."
     )
 
-# Define classes and descriptions
+# Define classes
 classes = [
     "Apple___Apple_scab", "Apple___Black_rot", "Apple___Cedar_apple_rust", "Apple___healthy",
     "Blueberry___healthy", "Cherry_(including_sour)___Powdery_mildew", "Cherry_(including_sour)___healthy",
-    "Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot", "Corn_(maize)___Common_rust_", 
-    "Corn_(maize)___Northern_Leaf_Blight", "Corn_(maize)___healthy", "Grape___Black_rot", 
+    "Corn___Cercospora_leaf_spot Gray_leaf_spot", "Corn___Common_rust", 
+    "Corn___Northern_Leaf_Blight", "Corn___healthy", "Grape___Black_rot", 
     "Grape___Esca_(Black_Measles)", "Grape___Leaf_blight_(Isariopsis_Leaf_Spot)", "Grape___healthy", 
     "Orange___Haunglongbing_(Citrus_greening)", "Peach___Bacterial_spot", "Peach___healthy", 
     "Pepper,_bell___Bacterial_spot", "Pepper,_bell___healthy", "Potato___Early_blight", 
@@ -60,17 +59,13 @@ classes = [
     "Background_without_leaves",
 ]
 
-classes_and_descriptions = {
-    # Add descriptions here...
-}
-
 # Load image function
 def load_uploaded_image(file):
     file_bytes = np.asarray(bytearray(file.read()), dtype=np.uint8)
     opencv_image = cv2.imdecode(file_bytes, 1)
     return opencv_image
 
-# Set up sidebar for input method selection
+# Sidebar for input method selection
 st.subheader("Select Image Input Method")
 input_method = st.radio(
     "Options", ["File Uploader", "Camera Input"], label_visibility="collapsed"
@@ -95,8 +90,8 @@ elif input_method == "Camera Input":
 # Model file path
 export_file_path = "./models/export.pkl"
 
-
 def Plant_Disease_Detection(img_file):
+    # Load the model
     model = load_learner(export_file_path)
     prediction, _, outputs = model.predict(img_file)
 
@@ -111,7 +106,7 @@ def Plant_Disease_Detection(img_file):
     return predicted_class, confidence, outputs_np  # Return class, confidence, and all outputs
 
 # After the submit button is clicked
-if submit:
+if st.button("Submit"):
     st.subheader("Output")
     if input_method == "File Uploader":
         img_file_path = uploaded_file_img
@@ -133,19 +128,16 @@ if submit:
     st.write(output_df)
 
     # Plotting a pie chart for confidence
-    import matplotlib.pyplot as plt
-    
-    # Pie chart for confidence
     plt.figure(figsize=(5, 5))
     plt.pie([confidence, 100 - confidence], labels=[f'Confidence: {confidence:.2f}%', 'Uncertainty'], autopct='%1.1f%%', startangle=90)
     plt.title('Confidence in Prediction')
     st.pyplot(plt)
 
+# Footer for the app
 footer = """
 <div style="text-align: center; font-size: medium; margin-top:50px;">
     If you find ChromaticScan useful or interesting, please consider starring it on GitHub.
     <hr>
 </div>
 """
-
 st.markdown(footer, unsafe_allow_html=True)
