@@ -8,4 +8,4 @@ torchvision
 # numpy==1.16.3
 tensorflow
 seaborn
-keras==2.12
+keras
