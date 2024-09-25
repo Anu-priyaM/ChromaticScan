@@ -97,8 +97,19 @@ export_file_path = "./models/export.pkl"
 def Plant_Disease_Detection(img_file):
     model = load_learner(export_file_path)
     prediction, _, outputs = model.predict(img_file)
-    confidence = np.max(outputs).item() * 100  # Get confidence percentage
+
+    # Debugging: Print the outputs shape and content
+    st.write("Outputs:", outputs)
+    
+    # Check if outputs is indeed an array and has the expected shape
+    if isinstance(outputs, (np.ndarray, list)):
+        confidence = np.max(outputs) * 100  # Get confidence percentage
+    else:
+        st.error("Unexpected output format from model. Outputs: {}".format(outputs))
+        confidence = 0  # Default to 0 if we can't extract confidence
+
     return prediction, confidence
+
 
 submit = st.button(label="Submit Leaf Image")
 if submit:
