@@ -164,11 +164,12 @@ if page == "Prediction":
         model = load_learner(export_file_path)  # Load the model
         prediction = model.predict(img_file)  # Predict the class
         predicted_class = prediction[0]  # Get the predicted class
+        confidence = prediction[2][predicted_class].item() * 100  # Get the confidence score
 
         if predicted_class not in classes:
             return f"The uploaded image is {predicted_class}, which is not compatible with the application. Please upload an image of a plant leaf for disease detection."
 
-        return classes_and_descriptions[predicted_class]  # Return the description of the prediction
+        return predicted_class, confidence  # Return the predicted class and confidence
 
     submit = st.button(label="Submit Leaf Image")
     if submit:
@@ -179,38 +180,40 @@ if page == "Prediction":
             img_file_path = camera_file_img
 
         with st.spinner(text="This may take a moment..."):
-            prediction = Plant_Disease_Detection(img_file_path)
-            st.write(prediction)
+            predicted_class, confidence = Plant_Disease_Detection(img_file_path)
 
-        if prediction:
-                st.write(f"Prediction: {predicted_class}")
-                st.write(f"Description: {classes_and_descriptions.get(predicted_class, 'No description available.')}")
-                st.write(f"Confidence: {confidence:.2f}%")
-                
-                # Prepare data for the table
-                recommendation = remedies.get(predicted_class, 'No recommendation available.')
-                status = "Unhealthy" if "healthy" not in predicted_class else "Healthy"
-                
-                data = {
-                    "Details": ["Leaf Status", "Disease Name", "Recommendation", "Accuracy"],
-                    "Values": [status, 
-                               predicted_class.split('___')[1] if "___" in predicted_class else 'Healthy',
-                               recommendation,
-                               f"{confidence:.2f}%"]
-                }
-                df = pd.DataFrame(data)
-                st.table(df)
-                 # Visualization: Pie Chart for Confidence
-                fig, ax = plt.subplots()
-                ax.pie([confidence, 100-confidence], labels=[f'Confidence: {confidence:.2f}%', ''], autopct='%1.1f%%', colors=['#4CAF50', '#D3D3D3'], startangle=90)
-                ax.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
-                st.pyplot(fig)
+            st.write(f"Prediction: {predicted_class}")
+            st.write(f"Description: {classes_and_descriptions.get(predicted_class, 'No description available.')}")
+            st.write(f"Confidence: {confidence:.2f}%")
+
+            # Prepare data for the table
+            recommendation = remedies.get(predicted_class, 'No recommendation available.')
+            status = "Unhealthy" if "healthy" not in predicted_class else "Healthy"
+
+            data = {
+                "Details": ["Leaf Status", "Disease Name", "Recommendation", "Accuracy"],
+                "Values": [
+                    status,
+                    predicted_class.split('___')[1] if "___" in predicted_class else 'Healthy',
+                    recommendation,
+                    f"{confidence:.2f}%"
+                ]
+            }
+            df = pd.DataFrame(data)
+            st.table(df)
+
+            # Visualization: Pie Chart for Confidence
+            fig, ax = plt.subplots()
+            ax.pie([confidence, 100-confidence], labels=[f'Confidence: {confidence:.2f}%', ''], 
+                    autopct='%1.1f%%', colors=['#4CAF50', '#D3D3D3'], startangle=90)
+            ax.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
+            st.pyplot(fig)
+
         else:
-                st.error("Error in prediction. Please try again.")
-        elif submit:
+            st.error("Error in prediction. Please try again.")
+    else:
         st.warning("Please upload or capture an image first.")
 
-# Additional pages (Charts, Disclaimer) can be implemented similarly
 
 
 
