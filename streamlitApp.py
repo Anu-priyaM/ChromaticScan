@@ -11,6 +11,7 @@ from fastai.vision.all import *
 import pathlib
 import matplotlib.pyplot as plt
 import seaborn as sns
+import pandas as pd
 
 # Set up the page layout
 st.set_page_config(page_title="ChromaticScan", page_icon=":camera:")
@@ -140,50 +141,44 @@ input_method = st.radio(
 
 # Check which input method was selected
 if input_method == "File Uploader":
-    uploaded_file = st.file_uploader(
-        "Choose an image file", type=["jpg", "jpeg", "png"]
-    )
-    if uploaded_file is not None:
-        uploaded_file_img = load_uploaded_image(uploaded_file)
-        st.image(uploaded_file_img, caption="Uploaded Image", width=300)
-        st.success("Image uploaded successfully!")
-    else:
-        st.warning("Please upload an image file.")
-
+    uploaded_file_img = st.file_uploader("Choose a leaf image...", type=["jpg", "png", "jpeg"])
 elif input_method == "Camera Input":
-    st.warning("Please allow access to your camera.")
-    camera_image_file = st.camera_input("Click an Image")
-    if camera_image_file is not None:
-        camera_file_img = load_uploaded_image(camera_image_file)
-        st.image(camera_file_img, caption="Camera Input Image", width=300)
-        st.success("Image clicked successfully!")
-    else:
-        st.warning("Please click an image.")
-
-# model file path
-export_file_path = "./models/export.pkl"
+    camera_file_img = st.camera_input("Take a picture of a leaf...")
 
 
+# Load the model once
+model = load_model('plant_disease_model.h5')
+
+
+# Define the prediction function
 def Plant_Disease_Detection(img_file_path):
-    model = load_learner(export_file_path, "export.pkl")
-    # Get prediction and confidence score
-    prediction, idx, probabilities = model.predict(img_file_path)
+    # Load the image and preprocess it
+    if isinstance(img_file_path, str):
+        img = load_uploaded_image(open(img_file_path, "rb"))
+    else:
+        img = load_uploaded_image(img_file_path)
+
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)  # Convert to RGB
+    img = cv2.resize(img, (224, 224))  # Resize to model input size
+    img_array = np.array(img) / 255.0  # Normalize the image
+    img_array = np.expand_dims(img_array, axis=0)  # Expand dimensions
+
+    # Make prediction
+    predictions = model.predict(img_array)
+    idx = np.argmax(predictions)
+    probability = predictions[0][idx]
     
-    # Extract the confidence score
-    confidence_score = probabilities[idx].item()
+    # Prepare confidence message
+    confidence_message = f"Confidence: {probability:.2f}" if probability >= 0.6 else "Low confidence in prediction."
 
-    # Check if prediction is valid
-    if prediction not in classes:
-        prediction_sentence = f"The uploaded image is {prediction}, which is not compatible with the application. Please upload an image of a plant leaf for disease detection."
-        return prediction_sentence, None, None
+    # Retrieve class name and probabilities
+    class_name = classes[idx]
+    probabilities = predictions[0]  # Get probabilities for all classes
 
-    # Generate prediction message with confidence score
-    prediction_sentence = classes_and_descriptions[prediction]
-    confidence_message = f"Confidence: {confidence_score * 100:.2f}%"
-    
-    return prediction_sentence, confidence_message, probabilities
+    return class_name, confidence_message, probabilities
 
 
+# Handling the submission button
 submit = st.button(label="Submit Leaf Image")
 if submit:
     st.subheader("Output")
@@ -201,8 +196,11 @@ if submit:
 
         # Visualization
         if probabilities is not None:
-            # Convert probabilities to a numpy array
-            probabilities = probabilities.numpy()
+            # Ensure probabilities is a numpy array
+            if isinstance(probabilities, list):
+                probabilities = np.array(probabilities)
+            elif hasattr(probabilities, 'numpy'):
+                probabilities = probabilities.numpy()
 
             # Create a DataFrame for better plotting
             prob_df = pd.DataFrame({
@@ -219,19 +217,19 @@ if submit:
             st.pyplot(plt)
 
             # Pie Chart for the predicted class vs others
-            plt.figure(figsize=(7, 7))
-            plt.pie([probabilities[idx], 1 - probabilities[idx]], labels=[prediction, 'Other Classes'], autopct='%1.1f%%', startangle=90, colors=['#66c2a5', '#fc8d62'])
-            plt.title("Prediction Confidence Distribution")
-            st.pyplot(plt)
-
-footer = """
-<div style="text-align: center; font-size: medium; margin-top:50px;">
-    If you find ChromaticScan useful or interesting, please consider starring it on GitHub.
-    <hr>
-    <a href="https://github.com/SaiJeevanPuchakayala/ChromaticScan" target="_blank">
-    <img src="https://img.shields.io/github/stars/SaiJeevanPuchakayala/ChromaticScan.svg?style=social" alt="GitHub stars">
-  </a>
-</div>
-"""
-
-st.markdown(footer, unsafe_allow_html=True)
+            if 0 <= idx < len(probabilities):
+                predicted_probability = probabilities[idx]
+                other_classes_probability = 1 - predicted_probability
+                
+                plt.figure(figsize=(7, 7))
+                plt.pie(
+                    [predicted_probability, other_classes_probability],
+                    labels=[prediction, 'Other Classes'],
+                    autopct='%1.1f%%',
+                    startangle=90,
+                    colors=['#66c2a5', '#fc8d62']
+                )
+                plt.title("Prediction Confidence Distribution")
+                st.pyplot(plt)
+            else:
+                st.error("Error: Invalid index for predicted probabilities.")
