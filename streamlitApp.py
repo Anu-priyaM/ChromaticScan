@@ -223,11 +223,8 @@ if submit:
 
 footer = """
 <div style="text-align: center; font-size: medium; margin-top:50px;">
-    If you find ChromaticScan useful or interesting, please consider starring it on GitHub.
-    <hr>
-    <a href="https://github.com/SaiJeevanPuchakayala/ChromaticScan" target="_blank">
-    <img src="https://img.shields.io/github/stars/SaiJeevanPuchakayala/ChromaticScan.svg?style=social" alt="GitHub stars">
-  </a>
+   This is Final year project.Developed by Anupriya.
+   
 </div>
 """
 
