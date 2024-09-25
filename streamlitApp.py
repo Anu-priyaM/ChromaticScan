@@ -134,7 +134,7 @@ elif page == "Prediction":
         model_input = np.expand_dims(model_input, axis=0)
 
         # Load the model (ensure the model path is correct)
-        model = load_model('path/to/your/model.h5')
+        model = load_model('models/export.h5')
 
         # Make prediction
         prediction = model.predict(model_input)
