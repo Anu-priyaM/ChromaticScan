@@ -205,9 +205,9 @@ if page == "Prediction":
                 ax.pie([confidence, 100-confidence], labels=[f'Confidence: {confidence:.2f}%', ''], autopct='%1.1f%%', colors=['#4CAF50', '#D3D3D3'], startangle=90)
                 ax.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
                 st.pyplot(fig)
-            else:
+        else:
                 st.error("Error in prediction. Please try again.")
-    elif submit:
+        elif submit:
         st.warning("Please upload or capture an image first.")
 
 # Additional pages (Charts, Disclaimer) can be implemented similarly
